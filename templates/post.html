@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+
+{% block title %}Публикация пользователя {{ author.get_full_name }}{% endblock %}
+{% block header %} {{ author.get_full_name }}{% endblock %}
+{% block content %}
+{% load thumbnail %}
+
+{% include "post_item.html" %}
+{% include 'comment.html' %}
+
+{% endblock %} 

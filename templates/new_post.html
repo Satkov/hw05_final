@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %} {% if is_edit %} Редактирование{% else %} Добавление новой{% endif %} записи{% endblock %}
+{% block header %} {% if is_edit %} Редактирование{% else %} Добавление новой{% endif %} записи{% endblock %}
+{% block content %}
+<p class="lead">
+  {% if is_edit %} Вы можете отредактировать текст записи и выбрать группу {% else %} Напишите текст вашей записи и добавьте её в группу, если необходимо. {% endif %}
+</p><p>
+ <form method="post" enctype="multipart/form-data">
+     {% csrf_token %}
+     <div class="form-group row" aria-required={% if field.field.required %}"true"{% else %}"false"{% endif %}>
+      <label for="{{ field.id_for_label }}" class="col-md-4 col-form-label text-md-right">{{ field.label }}{% if field.field.required %}<span class="required">*</span>{% endif %}</label>
+      <div class="col-md-6">
+
+        {% for field in form %}
+        <div class="form-group row" aria-required={% if field.field.required %}"true"{% else %}"false"{% endif %}>
+                <label for="{{ field.id_for_label }}" class="col-md-4 col-form-label text-md-right">{{ field.label }}{% if field.field.required %}<span class="required">*</span>{% endif %}</label>
+                <div class="col-md-6">
+
+                    {{ field }}
+
+                    {% if field.help_text %}
+                    <small id="{{ field.id_for_label }}-help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+                    {% endif %}
+                </div>                
+        </div>
+        {% endfor %}
+
+          {% if field.help_text %}
+          <small id="{{ field.id_for_label }}-help" class="form-text text-muted">{{ field.help_text|safe }}</small>
+          {% endif %}
+      </div>                
+</div>
+
+  <button type="submit">
+    {% if is_edit %} Сохранить {% else %} Отправить {% endif %}
+  </button>
+  </form>
+
+{% endblock %}

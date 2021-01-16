@@ -1,0 +1,5 @@
+{
+    "python.analysis.typeCheckingMode": "basic",
+    "python.pythonPath": "C:\\Users\\Georgy\\AppData\\Local\\Programs\\Python\\Python39\\python.exe",
+    "python.analysis.cacheFolderPath": "./venv/Scripts/python.exe"
+}
