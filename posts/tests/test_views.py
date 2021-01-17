@@ -95,7 +95,6 @@ class StaticViewTests(TestCase):
                 form_field = response.context.get('form').fields.get(value)
                 self.assertIsInstance(form_field, expected)
 
-    #Сделал 2 теста с одной и той же задачей, оба равноценны или второй лучше первого всё-таки?
     def test_cache_posts_index(self):
         response1 = self.guest_client.get(reverse('index'))
         Post.objects.create(
@@ -104,14 +103,3 @@ class StaticViewTests(TestCase):
         )
         response2 = self.guest_client.get(reverse('index'))
         self.assertEqual(str(response1.content), str(response2.content))
-
-    def test_cache_post_index2(self):
-        response1 = self.guest_client.get(reverse('index'))
-        Post.objects.create(
-            text='lorem lorem lorem',
-            author=StaticViewTests.user,
-        )
-        response2 = self.guest_client.get(reverse('index'))
-        post_count_context = len(response1.context.get('page').object_list)
-        post_count_db = Post.objects.count() 
-        self.assertNotEqual(post_count_db, post_count_context)

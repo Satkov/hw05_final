@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load cache %}
+{% block title %} Новости подписок {% endblock %}
+
+{% include "menu.html" %}
+
+{% block content %}
+    <div class="container">
+           <h1> Новости избранных авторов</h1>
+            <!-- Вывод ленты записей -->
+            {% cache 20 index_page %}
+                {% for post in page %}
+                  <!-- Вот он, новый include! -->
+                    {% include "post_item.html" with post=post %}
+                {% endfor %}
+            {% endcache %} 
+    </div>
+
+        <!-- Вывод паджинатора -->
+        {% if page.has_other_pages %}
+            {% include "paginator.html" with items=page paginator=paginator%}
+        {% endif %}
+
+{% endblock %}

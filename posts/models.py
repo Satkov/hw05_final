@@ -46,6 +46,7 @@ class Post(models.Model):
         blank=True, null=True
     )  
 
+
     class Meta:
         ordering = ['-pub_date']
 
@@ -71,4 +72,17 @@ class Comment(models.Model):
     created = models.DateTimeField(
         "date published",
         auto_now_add=True
+    )
+
+class Follow(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='follower',
+    )
+    author = models.ForeignKey(
+        User,
+        null = True,
+        on_delete=models.CASCADE,
+        related_name='following',
     )
