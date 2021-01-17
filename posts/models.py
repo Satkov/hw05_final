@@ -16,6 +16,7 @@ class Group(models.Model):
     def __str__(self):
         return self.title
 
+
 class Post(models.Model):
     text = models.TextField(
         max_length=2000,
@@ -42,16 +43,16 @@ class Post(models.Model):
     )
 
     image = models.ImageField(
-        upload_to='media/', 
+        upload_to='posts/',
         blank=True, null=True
     )  
-
 
     class Meta:
         ordering = ['-pub_date']
 
     def __str__(self):
         return self.text
+
 
 class Comment(models.Model):
     post = models.ForeignKey(
@@ -74,6 +75,7 @@ class Comment(models.Model):
         auto_now_add=True
     )
 
+
 class Follow(models.Model):
     user = models.ForeignKey(
         User,
@@ -82,7 +84,7 @@ class Follow(models.Model):
     )
     author = models.ForeignKey(
         User,
-        null = True,
+        null=True,
         on_delete=models.CASCADE,
         related_name='following',
     )

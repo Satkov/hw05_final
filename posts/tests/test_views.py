@@ -4,15 +4,14 @@ import tempfile
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, Client
-from django.core.cache import cache
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django import forms
 
-from posts.models import Post, Group
-
+from posts.models import Post, Group, Follow
 
 User = get_user_model()
+
 
 class StaticViewTests(TestCase):
     @classmethod
@@ -20,6 +19,7 @@ class StaticViewTests(TestCase):
         super().setUpClass()
         settings.MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
         cls.user = User.objects.create(username='TestUser')
+        cls.user2 = User.objects.create(username='TestFollowUser')
         cls.group = Group.objects.create(
             title='testGroup',
             slug='testSlug',
@@ -42,7 +42,11 @@ class StaticViewTests(TestCase):
             text='lorem lorem lorem',
             author=cls.user,
             group=cls.group,
-            image = cls.uploaded
+            image=cls.uploaded
+        )
+        cls.post_follow_user = Post.objects.create(
+            text='follow test',
+            author=cls.user2,
         )
 
     @classmethod
@@ -62,7 +66,7 @@ class StaticViewTests(TestCase):
             'new_post.html': reverse('new_post'),
             'profile.html': reverse('profile', kwargs={'username': 'TestUser'}),
             'post.html': reverse('profile', kwargs={'username': 'TestUser'}) + '1/',
-            'new_post.html': reverse('profile', kwargs={'username':'TestUser'}) + '1/edit/',
+            'new_post.html': reverse('profile', kwargs={'username': 'TestUser'}) + '1/edit/',
         }
         for template, url_name in html_templates_name.items():
             with self.subTest(template=template):
@@ -103,3 +107,44 @@ class StaticViewTests(TestCase):
         )
         response2 = self.guest_client.get(reverse('index'))
         self.assertEqual(str(response1.content), str(response2.content))
+
+    def test_follow_another_user(self):
+        self.authorized_client.get(reverse('profile_follow',
+                                   kwargs={'username': 'TestFollowUser'}))
+        follow_exist = Follow.objects.filter(
+                   user=StaticViewTests.user,
+                   author=StaticViewTests.user2).exists()
+        self.assertEqual(True, follow_exist)
+
+    def test_unfollow_another_user(self):
+        response = self.authorized_client.get(
+                   reverse('profile_follow',
+                   kwargs={'username': 'TestFollowUser'})
+        )
+        response = self.authorized_client.get(
+                   reverse('profile_unfollow',
+                   kwargs={'username': 'TestFollowUser'})
+        )
+        follow_exist = Follow.objects.filter(
+                       user=StaticViewTests.user,
+                       author=StaticViewTests.user2).exists()
+        self.assertEqual(False, follow_exist)
+
+    def test_post_author_user_follow_exist_in_follow_page(self):
+        response = self.authorized_client.get(
+                   reverse('profile_follow',
+                   kwargs={'username': 'TestFollowUser'})
+                   )
+        response = self.authorized_client.get(reverse('follow_index'))
+        page_post = response.context.get('page')[0]
+        self.assertEqual(page_post.text, 'follow test')
+        self.assertEqual(page_post.author, StaticViewTests.user2)
+
+    def test_post_author_user_not_follow_not_exist_in_follow_page(self):
+        response = self.authorized_client.get(reverse('follow_index'))
+        post_does_not_exist = False
+        try:
+            response.context.get('page')[0]
+        except IndexError:
+            post_does_not_exist = True
+        self.assertEqual(True, post_does_not_exist)

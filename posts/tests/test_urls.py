@@ -5,6 +5,7 @@ from posts.models import Group, Post
 
 User = get_user_model()
 
+
 class StaticURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -48,11 +49,15 @@ class StaticURLTests(TestCase):
     def test_urls_unavalible_for_guest(self):
         urls_unavalible_for_guest = [
             '/new',
+            '/TestUser/follow/',
+            '/TestUser/unfollow/',
+            '/follow/',
+            "/TestUser/1/comment"
         ]
         for url in urls_unavalible_for_guest:
             with self.subTest(url=url):
                 response = self.guest_client.get(url)
-                self.assertRedirects(response, '/auth/login/?next=/new')
+                self.assertRedirects(response, '/auth/login/?next=' + url)
 
     def test_urls_with_auth_user(self):
         urls_with_auth_user = [
@@ -62,6 +67,7 @@ class StaticURLTests(TestCase):
             '/TestUser/',
             '/TestUser/1/',
             '/TestUser/1/edit/',
+            '/follow/',
         ]
         for url in urls_with_auth_user:
             with self.subTest(url=url):

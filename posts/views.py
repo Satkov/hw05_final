@@ -16,7 +16,7 @@ def index(request):
          request,
          'index.html',
          {'page': page,
-          'paginator': paginator,}
+          'paginator': paginator}
      )
 
 
@@ -75,8 +75,9 @@ def profile(request, username):
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
     following = False
-    if Follow.objects.filter(user=request.user, author=author).exists():
-        following = True
+    if request.user.is_authenticated:
+        if Follow.objects.filter(user=request.user, author=author).exists():
+            following = True
     context = {
         'page': page,
         'author': author,
@@ -94,7 +95,7 @@ def post_view(request, username, post_id):
     author = get_object_or_404(User, username=username)
     post = get_object_or_404(Post, id=post_id)
     all_posts_count = Post.objects.filter(author=author).select_related('author').count()
-    form = CommentForm
+    form = CommentForm(request.POST or None)
     comments = Comment.objects.filter(post=post)
     context = {
         'author': author,
@@ -105,22 +106,25 @@ def post_view(request, username, post_id):
     }
     return render(request, 'post.html', context)
 
+
 def page_not_found(request, exception):
     return render(
-        request, 
-        "misc/404.html", 
-        {"path": request.path}, 
+        request,
+        "misc/404.html",
+        {"path": request.path},
         status=404
     )
 
+
 def server_error(request):
     return render(request, "misc/500.html", status=500)
+
 
 @login_required(login_url='/auth/login/')
 def add_comment(request, username, post_id):
     form = CommentForm(request.POST or None)
     post = get_object_or_404(Post, id=post_id)
-    if request.method == "POST"and form.is_valid():
+    if request.method == "POST" and form.is_valid():
         comment = form.save(commit=False)
         comment.author = request.user
         comment.post = post
@@ -131,13 +135,12 @@ def add_comment(request, username, post_id):
     return redirect(reverse('post', kwargs={'username': username,
                                             'post_id': post_id}))
 
+
 @login_required(login_url='/auth/login/')
 def follow_index(request):
+    # украдено
     follow_list = []
     follow_list_id = Follow.objects.filter(user=request.user).in_bulk()
-    # нагло украдено и работает супер медленно.
-    # внизу файла прикреплю свою идею, которую не могу реализовать.
-    # Извиняюсь, что закидываю вопросами!
     for i in follow_list_id:
         follow_list.append(follow_list_id[i].author)
     post_list = Post.objects.filter(author__in=follow_list)
@@ -148,62 +151,30 @@ def follow_index(request):
          request,
          'follow.html',
          {'page': page,
-          'paginator': paginator,}
+          'paginator': paginator}
     )
+'''
+Вопрос: есть способ помимо того, что я похилит из слака, чтобы реализовать показ постов?
+Очень хотелось сделать фильтрацию модели пост без всяких циклов с author id, но мои попытки
+добавить дополнительную колонку в модель Post не увенчались успехом.
+'''
+
 
 @login_required(login_url='/auth/login/')
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    if request.user == author or Follow.objects.filter(user=request.user, author=author).exists():
+    if request.user == author or Follow.objects.filter(
+                                 user=request.user, author=author).exists():
         return redirect(reverse('profile', kwargs={'username': username}))
     Follow.objects.create(user=request.user, author=author).save()
     return redirect(reverse('follow_index'))
 
+
 @login_required(login_url='/auth/login/')
 def profile_unfollow(request, username):
     author = get_object_or_404(User, username=username)
-    if request.user == author or not Follow.objects.filter(user=request.user, author=author).exists():
+    if request.user == author or not Follow.objects.filter(
+                                     user=request.user, author=author).exists():
         return redirect(reverse('profile', kwargs={'username': username}))
-    Follow.objects.filter(user=request.user, author=author).update(author=None)
+    Follow.objects.filter(user=request.user, author=author).delete()
     return redirect(reverse('follow_index'))
-
-
-'''
-Вряд ли этот вопрос решаем, но всё же.
-Хочу добавить в модель Post строку со списком людей, которые подписаны на автора поста,
-чтобы когда человек подписывается на автора, то у постов этого автора в строке users_follow_author добавлялся 
-подписавшийся на него пользователь, и хотел сделать это через .update.
-
-Однако, закономерно возникла проблема: если на автора подписывается другой пользователь, 
-то он перезапишет свой username и сотрёт username предыдущего подписчика. 
-Из-за этого я не могу использовать метод update.
-
-Собственно вопрос: знаете ли вы способ, который был бы похож на append, 
-чтобы он добавлял пользователя в список, который бы сохранялся в бд, 
-и также чтобы была возможность удалить этого пользователя по имени?
-
-Ну или любой другой способ, который позволит обновляться постам на странице follow
-Меньше чем за 10-20 секунд¯\_(ツ)_/¯
-
-#Models
-class Post(models.Model):
-
-	...
-
-    users_follow_author = models.ForeignKey(
-        User,
-        null=True,
-        on_delete=models.CASCADE,
-        related_name='followers',
-    )
-
-#views
-@login_required(login_url='/auth/login/')
-def profile_follow(request, username):
-    ...
-    #вот тут записываю инфу в модель Post при подписке на автора
-    Post.objects.filter(author=author).update(user_follow_authors=request.user)
-
-    #Вот так собирался делать при отписке
-    Post.objects.filter(author=author).update(user_follow_authors=None)
-'''
