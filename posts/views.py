@@ -120,8 +120,9 @@ def server_error(request):
 
 @login_required(login_url='/auth/login/')
 def add_comment(request, username, post_id):
+    author = get_object_or_404(User, username=username)
     form = CommentForm(request.POST or None)
-    post = get_object_or_404(Post, id=post_id, author=username)
+    post = get_object_or_404(Post, author=author, id=post_id)
     if request.method == "POST" and form.is_valid():
         comment = form.save(commit=False)
         comment.author = request.user
