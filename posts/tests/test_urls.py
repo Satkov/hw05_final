@@ -17,13 +17,12 @@ class StaticURLTests(TestCase):
             slug='testSlug',
             description='lalala lalala'
         )
-        post_counter = 0
-        while post_counter <= 12:
-            post_counter += 1
-            Post.objects.create(
-                text=f'post № {post_counter}',
-                author=cls.user,
-            )
+        objects = []
+        post_data = Post(text=f'post',
+                         author=cls.user)
+        for i in range(0, 13):
+            objects.append(post_data)
+        Post.objects.bulk_create(objects)
         Post.objects.create(
             text='test edit',
             author=StaticURLTests.user2,

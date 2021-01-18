@@ -37,7 +37,7 @@ class PostCreateFormTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(PostCreateFormTests.user)
 
-    def test_new_post_exist(self):
+    def test_create_new_post(self):
         image = (
             b'\x47\x49\x46\x38\x39\x61\x02\x00'
             b'\x01\x00\x80\x00\x00\x00\x00\x00'

@@ -142,9 +142,5 @@ class StaticViewTests(TestCase):
 
     def test_post_author_user_not_follow_not_exist_in_follow_page(self):
         response = self.authorized_client.get(reverse('follow_index'))
-        post_does_not_exist = False
-        try:
-            response.context.get('page')[0]
-        except IndexError:
-            post_does_not_exist = True
-        self.assertEqual(True, post_does_not_exist)
+        len_context = response.context.count('page')
+        self.assertEqual(0, len_context)

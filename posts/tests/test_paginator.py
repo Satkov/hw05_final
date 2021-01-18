@@ -11,14 +11,14 @@ class PostCreateFormTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create(username='TestUser')
+        objects = []
+        post_data = Post(text=f'post',
+                         author=cls.user)
         for i in range(0, 13):
-            # подскажите, как сделать всё одним запросом? Не смог нагуглить :(
-            Post.objects.create(
-                text=f'post № {i}',
-                author=cls.user,
-                )
+            objects.append(post_data)
+        Post.objects.bulk_create(objects)
 
-    def test_first_page_containse_ten_records(self):
+    def test_first_page_containse_num_records(self):
         check_paginator_containse_num_records = [
             reverse('index'),
             reverse('profile', kwargs={'username': 'TestUser'}),
