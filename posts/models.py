@@ -41,11 +41,10 @@ class Post(models.Model):
         null=True,
         verbose_name='группа',
     )
-
     image = models.ImageField(
         upload_to='posts/',
         blank=True, null=True
-    )  
+    )
 
     class Meta:
         ordering = ['-pub_date']

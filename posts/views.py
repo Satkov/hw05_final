@@ -7,10 +7,10 @@ from .models import Post, Group, User, Comment, Follow
 from .forms import PostForm, CommentForm
 
 
-def is_subscribed(user, author):
-    follow_status = Follow.objects.filter(user=user, author=author).exists()
-    return follow_status
-
+def is_user_subscribed(user, author):
+    if user.is_authenticated:
+        return Follow.objects.filter(user=user, author=author).exists()
+    return False
 
 def index(request):
     post_list = Post.objects.select_related('group', 'author')
@@ -60,15 +60,13 @@ def post_edit(request, username, post_id):
                     files=request.FILES or None,
                     instance=post)
     if request.user == post.author:
-        if request.method == "POST":
-            if form.is_valid():
-                post = form.save(commit=False)
-                post.save()
-                return redirect('post', username=username, post_id=post_id)
-        else:
-            return render(request, 'new_post.html', {'form': form,
-                                                     'post': post,
-                                                     'is_edit': True})
+        if request.method == "POST" and form.is_valid():
+            post = form.save(commit=False)
+            post.save()
+            return redirect('post', username=username, post_id=post_id)
+        return render(request, 'new_post.html', {'form': form,
+                                                 'post': post,
+                                                 'is_edit': True})
     return redirect('post', username=username, post_id=post_id)
 
 
@@ -78,9 +76,7 @@ def profile(request, username):
     paginator = Paginator(post_list, 10)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    is_following = False
-    if request.user.is_authenticated:
-        is_following = is_subscribed(request.user, author)
+    is_following = is_user_subscribed
     context = {
         'page': page,
         'author': author,
@@ -150,7 +146,7 @@ def follow_index(request):
 @login_required(login_url='/auth/login/')
 def profile_follow(request, username):
     author = get_object_or_404(User, username=username)
-    if request.user == author or is_subscribed(request.user, author):
+    if request.user == author or is_user_subscribed(request.user, author):
         return redirect('profile', username=username)
     Follow.objects.create(user=request.user, author=author)
     return redirect('follow_index')
@@ -159,7 +155,7 @@ def profile_follow(request, username):
 @login_required(login_url='/auth/login/')
 def profile_unfollow(request, username):
     author = get_object_or_404(User, username=username)
-    if request.user == author or not is_subscribed(request.user, author):
+    if request.user == author or not is_user_subscribed(request.user, author):
         return redirect('profile', username=username)
     Follow.objects.filter(user=request.user, author=author).delete()
     return redirect('follow_index')

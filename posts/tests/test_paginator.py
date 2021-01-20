@@ -11,11 +11,9 @@ class PostCreateFormTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create(username='TestUser')
-        objects = []
         post_data = Post(text=f'post',
                          author=cls.user)
-        for i in range(0, 13):
-            objects.append(post_data)
+        objects = [post_data for i in range (0, 13)]
         Post.objects.bulk_create(objects)
 
     def test_first_page_containse_num_records(self):
